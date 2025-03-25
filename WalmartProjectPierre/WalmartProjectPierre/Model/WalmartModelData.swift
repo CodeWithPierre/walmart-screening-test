@@ -2,13 +2,13 @@
 import Foundation
 
 struct CountryModel: Codable {
+    let name: String?
+    let region: String?
     let capital: String?
     let code: String?
     let currency: Currency?
     let flag: String?
     let language: Language?
-    let name: String?
-    let region: String?
 }
 
 struct Currency: Codable {

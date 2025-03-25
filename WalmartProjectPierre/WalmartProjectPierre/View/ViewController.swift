@@ -3,21 +3,22 @@ import UIKit
 
 class ViewController: UIViewController {
     
-    private var tableView: UITableView!
-    private var searchController: UISearchController!
-    private var filteredCountries: [CountryModel] = []
-    private var countries: [CountryModel] = []
-    private let viewModel = CountryViewModel()
-    private var isFiltering = false
-    private var searchBar: UISearchBar!
+    var countryTableView: UITableView!
+    var searchController: UISearchController!
+    var filteredCountries: [CountryModel] = []
+    var countries: [CountryModel] = []
+    var viewModel = CountryViewModel()
+    var isFiltering = false
+    var searchBar: UISearchBar!
     
     // MARK: - View Life Cycle
     override func viewDidLoad() {
         super.viewDidLoad()
+        viewModel.fetchCountries()
         setupUI()
         setupBinding()
         setupSearchController()
-        viewModel.fetchCountries()
+        self.countryTableView.reloadData()
     }
     
     // MARK: - Set up UI
@@ -34,20 +35,20 @@ class ViewController: UIViewController {
             searchBar.trailingAnchor.constraint(equalTo: view.trailingAnchor)
         ])
         
-        tableView = UITableView(frame: .zero, style: .plain)
-        tableView.dataSource = self
-        tableView.delegate = self
-        tableView.rowHeight = UITableView.automaticDimension
-        tableView.estimatedRowHeight = 50
-        tableView.register(CountryTableViewCell.self, forCellReuseIdentifier: "CountryCell")
-        tableView.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(tableView)
+        countryTableView = UITableView(frame: .zero, style: .plain)
+        countryTableView.dataSource = self
+        countryTableView.delegate = self
+        countryTableView.rowHeight = UITableView.automaticDimension
+        countryTableView.estimatedRowHeight = 50
+        countryTableView.register(CountryTableViewCell.self, forCellReuseIdentifier: "CountryCell")
+        countryTableView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(countryTableView)
         
         NSLayoutConstraint.activate([
-            tableView.topAnchor.constraint(equalTo: searchBar.bottomAnchor),
-            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+            countryTableView.topAnchor.constraint(equalTo: searchBar.bottomAnchor),
+            countryTableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            countryTableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            countryTableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
     }
     
@@ -65,30 +66,30 @@ class ViewController: UIViewController {
             DispatchQueue.main.async {
                 self?.countries = self?.viewModel.countries ?? []
                 self?.filteredCountries = self?.countries ?? []
-                self?.tableView.reloadData()
+                self?.countryTableView.reloadData()
             }
         }
     }
     
-    private func filterCountries(for searchText: String) {
+    func filterCountries(for searchText: String) {
         if searchText.isEmpty {
-            isFiltering = false
-            filteredCountries = countries
+            self.isFiltering = false
+            self.filteredCountries = countries
         } else {
             isFiltering = true
-            filteredCountries = countries.filter { country in
+            self.filteredCountries = countries.filter { country in
                 let searchTextLowercased = searchText.lowercased()
                 return (country.name?.lowercased().contains(searchTextLowercased) ?? false) ||
                 (country.capital?.lowercased().contains(searchTextLowercased) ?? false)
             }
         }
-        tableView.reloadData()
+        countryTableView.reloadData()
     }
     
     override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
         super.viewWillTransition(to: size, with: coordinator)
         coordinator.animate(alongsideTransition: { _ in
-            self.tableView.reloadData()
+            self.countryTableView.reloadData()
         })
     }
 }
@@ -97,12 +98,12 @@ class ViewController: UIViewController {
 extension ViewController: UITableViewDataSource, UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return isFiltering ? filteredCountries.count : countries.count
+        return countries.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "CountryCell", for: indexPath) as! CountryTableViewCell
-        let country = isFiltering ? filteredCountries[indexPath.row] : countries[indexPath.row]
+        let country = viewModel.getCountry(at: indexPath.row)
         cell.countryLabel.text = "\(country.name ?? ""), \(country.region ?? "")"
         cell.codeLabel.text = country.code
         cell.capitalLabel.text = country.capital
